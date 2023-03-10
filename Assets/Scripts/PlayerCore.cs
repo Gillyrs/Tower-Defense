@@ -19,7 +19,7 @@ public class PlayerCore : MonoBehaviour
         horizontalMovement = Input.GetAxisRaw("Horizontal");
         verticalMovement = Input.GetAxisRaw("Vertical");
 
-        mousePosition = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+        mousePosition = CameraController.Current.ScreenToWorldPoint(Input.mousePosition);
     }
 
     private void FixedUpdate()
