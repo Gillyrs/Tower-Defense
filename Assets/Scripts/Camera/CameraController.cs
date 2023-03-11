@@ -10,24 +10,32 @@ public class CameraController : MonoBehaviour
     [SerializeField] Animator animator;
     [SerializeField] private float speed;
     [SerializeField] private float duration;
+    [SerializeField] private AudioSource slideSound;
     private void Awake()
     {
         Current = this;        
     }
+    private void OnValidate()
+    {
+        if(isActiveAndEnabled)
+            animator.speed = speed;
+    }
     public void MovetoBuildingCamera()
     {
+        slideSound.Play();
         animator.Play("GotoBuildingCamera");
     }
     public void MovetoPlayerCamera()
     {
-        if(Camera.main.transform.position.x == player.transform.position.x 
+        if (Camera.main.transform.position.x == player.transform.position.x
            || Camera.main.transform.position.y == player.transform.position.y)
         {
+            slideSound.Play();            
             animator.Play("GotoPlayerCamera");
         }
         else
         {
-            StartCoroutine(MoveCameraToPlayer(() => animator.Play("GotoPlayerCamera")));
+            StartCoroutine(MoveCameraToPlayer(() => { slideSound.Play(); animator.Play("GotoPlayerCamera"); } ));
         }
         
     }

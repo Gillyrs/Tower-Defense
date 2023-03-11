@@ -13,8 +13,8 @@ public class BuildingSystem : MonoBehaviour, IInput
     [SerializeField] private TileBase whiteTile;
     [SerializeField] private GameObject buildingGrid;
     [SerializeField] private GameObject prefab;
-
     [SerializeField] private Building objectToPlace;
+    [SerializeField] private AstarPath astarPath;
     private IInput pastInput;
     private void Awake()    
     {
@@ -30,7 +30,6 @@ public class BuildingSystem : MonoBehaviour, IInput
     }
     public void Deactivate()
     {
-
     }
     private void BuildingInput()
     {
@@ -39,7 +38,7 @@ public class BuildingSystem : MonoBehaviour, IInput
             objectToPlace = Instantiate(prefab).GetComponent<Building>();
             BeginPlacing(objectToPlace);
         }
-        else if (Input.GetKeyDown(KeyCode.Space))
+        else if (Input.GetMouseButtonDown(0))
         {
             Place();
         }
@@ -81,9 +80,12 @@ public class BuildingSystem : MonoBehaviour, IInput
 
     private void Place()
     {
-        StopAllCoroutines();
-        objectToPlace.Place();
-        objectToPlace = null;
+        if (objectToPlace.TryPlace())
+        {
+            StopAllCoroutines();
+            objectToPlace = null;
+            astarPath.Scan();
+        }
         
     }
 

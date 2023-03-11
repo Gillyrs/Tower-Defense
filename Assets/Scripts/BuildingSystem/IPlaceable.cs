@@ -4,5 +4,5 @@ using UnityEngine;
 
 public interface IPlaceable
 {
-    void Place();
+    bool TryPlace();
 }

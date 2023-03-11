@@ -1,11 +1,15 @@
+using Cysharp.Threading.Tasks;
+using Pathfinding;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class PlayerCore : MonoBehaviour, IInput
+public class PlayerCore : MonoBehaviour, IInput, IObject, IDamagable
 {
     [SerializeField] private float speed;
     [SerializeField] private Weapon weapon;
+    [SerializeField] private float offset;
+    [SerializeField] private int health = 100;
     private Rigidbody2D rb;
     private float horizontalMovement;
     private float verticalMovement;
@@ -16,6 +20,17 @@ public class PlayerCore : MonoBehaviour, IInput
     {
         GameInput.Input.ChangeInput(PlayerInput, this);
         rb = GetComponent<Rigidbody2D>();
+    }
+    public Transform GetTransform()
+    {
+        return transform;
+    }
+    public void TakeDamage(int damage)
+    {
+        health -= damage;
+        if (health <= 0)
+            Destroy(gameObject);
+        
     }
     public void Activate(IInput pastInput)
     {
@@ -49,14 +64,17 @@ public class PlayerCore : MonoBehaviour, IInput
     {
         if (isDeactivated)
             return;
-
+        rb.velocity = Vector2.zero;
+        rb.angularVelocity = 0;
+        Debug.Log(rb.velocity);
+        Debug.Log(rb.angularVelocity);
         rb.MovePosition(transform.position
                                + new Vector3(horizontalMovement, verticalMovement) 
                                * speed 
                                * Time.fixedDeltaTime);
         Vector2 lookDirection = mousePosition - rb.position;
         float angle = Mathf.Atan2(lookDirection.y, lookDirection.x) * Mathf.Rad2Deg - 90f;
-        rb.rotation = angle;
+        rb.rotation = angle + offset;
 
     }
 }
