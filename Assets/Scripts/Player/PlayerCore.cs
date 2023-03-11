@@ -5,6 +5,7 @@ using UnityEngine;
 public class PlayerCore : MonoBehaviour, IInput
 {
     [SerializeField] private float speed;
+    [SerializeField] private Weapon weapon;
     private Rigidbody2D rb;
     private float horizontalMovement;
     private float verticalMovement;
@@ -32,9 +33,13 @@ public class PlayerCore : MonoBehaviour, IInput
         {
             BuildingSystem.Current.Activate(this);
         }
-        else if (Input.GetMouseButton(0))
+        else if (Input.GetMouseButtonDown(0))
         {
-
+            weapon.StartShooting();
+        }
+        else if (Input.GetMouseButtonUp(0))
+        {
+            weapon.EndShooting();
         }
         horizontalMovement = Input.GetAxisRaw("Horizontal");
         verticalMovement = Input.GetAxisRaw("Vertical");
