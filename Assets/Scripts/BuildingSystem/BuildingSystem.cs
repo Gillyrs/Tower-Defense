@@ -2,7 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Tilemaps;
-
+using Cysharp.Threading.Tasks;
 public class BuildingSystem : MonoBehaviour, IInput
 {
     public static BuildingSystem Current;
@@ -14,7 +14,8 @@ public class BuildingSystem : MonoBehaviour, IInput
     [SerializeField] private GameObject buildingGrid;
     [SerializeField] private GameObject prefab;
     [SerializeField] private Building objectToPlace;
-    [SerializeField] private AstarPath astarPath;
+    [SerializeField] private GameObject buildingMenu;
+    [SerializeField] private Listener listener;
     private IInput pastInput;
     private void Awake()    
     {
@@ -23,29 +24,34 @@ public class BuildingSystem : MonoBehaviour, IInput
     }
     public void Activate(IInput pastInput)
     {
+        listener.OnPointerClicked += TryPlace;
         CameraController.Current.MovetoBuildingCamera();
         ToggleBuildingMode();
         this.pastInput = pastInput;
+        buildingMenu.SetActive(true);
         GameInput.Input.ChangeInput(BuildingInput, this);
     }
     public void Deactivate()
     {
+        listener.OnPointerClicked -= TryPlace;
+        buildingMenu.SetActive(false);
+        if (objectToPlace == null)
+            return;        
+        Destroy(objectToPlace.gameObject);
     }
     private void BuildingInput()
     {
-        if (Input.GetKeyDown(KeyCode.G))
-        {
-            objectToPlace = Instantiate(prefab).GetComponent<Building>();
-            BeginPlacing(objectToPlace);
-        }
-        else if (Input.GetMouseButtonDown(0))
-        {
-            Place();
-        }
-        else if (Input.GetKeyDown(KeyCode.Escape))
+        if (Input.GetKeyDown(KeyCode.Escape))
         {
             ToggleBuildingMode();
             pastInput.Activate(this);
+        }
+    }
+    public void TryPlace()
+    {
+        if(objectToPlace != null)
+        {
+            Place();
         }
     }
     public void ToggleBuildingMode()
@@ -53,14 +59,25 @@ public class BuildingSystem : MonoBehaviour, IInput
         isInBuildingMode = !isInBuildingMode;
         buildingGrid.SetActive(isInBuildingMode);
     }
-    public void BeginPlacing<T>(T placeableObject) where T : IObject, IPlaceable
+    private void BeginPlacing<T>(T placeableObject) where T : IObject, IPlaceable
     {
+        var transform = placeableObject.GetTransform();
+        StartCoroutine(StartChangingPosition(transform));
+    }
+    public void BeginPlacingBuidling<T>(T placeableObject) where T : Building
+    {
+        if (objectToPlace != null)
+            Destroy(objectToPlace.gameObject);
+        else if (placeableObject.Price > Economy.Current.Money)
+            return;
+        Economy.Current.DescreaseMoney(placeableObject.Price);
+        objectToPlace = placeableObject;
         var transform = placeableObject.GetTransform();
         StartCoroutine(StartChangingPosition(transform));
     }
     private IEnumerator StartChangingPosition(Transform transform)
     {
-        while (true)
+        while (transform != null)
         {
             transform.position = GetSnappedToGridPosition(GetMousePosition2D());
             yield return null;
@@ -84,9 +101,16 @@ public class BuildingSystem : MonoBehaviour, IInput
         {
             StopAllCoroutines();
             objectToPlace = null;
-            astarPath.Scan();
+            StartCoroutine(Scan());
         }
         
+    }
+    private IEnumerator Scan()
+    {
+        foreach (var item in AstarPath.active.ScanAsync())
+        {
+            yield return null;
+        }
     }
 
 }

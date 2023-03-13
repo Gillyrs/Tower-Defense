@@ -14,71 +14,109 @@ public class Weapon : MonoBehaviour
     [SerializeField] private int damage;
     [SerializeField] private int maxAmmo;
     [SerializeField] private int currentAmmo;
+    [SerializeField] private bool shouldPitch;
 
     [Header("Fire")]
-    [SerializeField] private Transform firePosition;
+    [SerializeField] private List<Transform> firePositions;
     [SerializeField] private List<Sprite> fireSprites;
-    [SerializeField] private GameObject shootObject;
-    private SpriteRenderer shootObjectRenderer;
+    [SerializeField] private List<GameObject> shootObjects;
+    private List<SpriteRenderer> shootObjectsRenderers;
 
     [Header("Sounds")]
     [SerializeField] private AudioSource shootingSound;
-    [SerializeField] private AudioSource hittingSound;
+    [SerializeField] protected AudioSource hittingSound;
 
     [Header("Prefab")]
     [SerializeField] private GameObject bloodPrefab;  
     private IObjectPool objectPool;
 
+    [SerializeField] private Coroutine shootCoroutine;
+
     private void Start()
     {
-        shootObjectRenderer = shootObject.GetComponent<SpriteRenderer>();
+        shootObjectsRenderers = new List<SpriteRenderer>();
+        for (int i = 0; i < shootObjects.Count; i++)
+        {
+            shootObjectsRenderers.Add(shootObjects[i].GetComponent<SpriteRenderer>());
+        }
         currentAmmo = maxAmmo;
         objectPool = ObjectPoolSpawner.GetObjectPool(bloodPrefab);
+    }
+    private void OnDestroy()
+    {
+        StopAllCoroutines();
+        shootObjectsRenderers = null;
+        objectPool = null;
+        shootCoroutine = null;
     }
     public void StartShooting()
     {
         if (isShooting)
             return;
-        StartCoroutine(Shoot());
+        if (currentAmmo == 0)
+            return;
+        shootCoroutine = StartCoroutine(Shoot());
     }
     public async void EndShooting()
     {
+        if (!isActiveAndEnabled)
+            return;
         await UniTask.Delay(Convert.ToInt32(shotDelay * 1000));
         isShooting = false;
-        StopAllCoroutines();
-        shootObject.SetActive(false);
-    }
-    private void Update()
-    {
-        Debug.DrawRay(firePosition.position, firePosition.up);
+        if(shootCoroutine != null)
+            StopCoroutine(shootCoroutine);
+        foreach (var item in shootObjects)
+        {
+            if(item != null)
+                item.SetActive(false);
+        }
+        
     }
     private IEnumerator Shoot()
     {
         isShooting = true;
         while (currentAmmo != 0)
         {
-            shootObjectRenderer.sprite = fireSprites[Random.Range(0, fireSprites.Count - 1)];
-            shootObject.SetActive(true);
-            shootingSound.pitch = Random.Range(1.7f, 1.9f);
+            foreach (var item in shootObjectsRenderers)
+            {
+                item.sprite = fireSprites[Random.Range(0, fireSprites.Count - 1)];
+            }
+
+            foreach (var item in shootObjects)
+            {
+                item.SetActive(true);
+            }
+            if (shouldPitch)
+                shootingSound.pitch = Random.Range(1.7f, 1.9f);
             shootingSound.Play();
             currentAmmo--;
-            var hit = Physics2D.Raycast(firePosition.position, firePosition.up);
-            GameObject obj = null;
-            if (hit.transform != null)
+            for (int i = 0; i < firePositions.Count; i++)
             {
-                if (hit.transform.TryGetComponent(out IDamagable damagable))
+                var hit = Physics2D.RaycastAll(firePositions[i].position, firePositions[i].up);
+                GameObject obj = null;
+                foreach (var item in hit)
                 {
-                    obj = objectPool.Instantiate(hit.point, Quaternion.identity);
-                    var controller = obj.GetComponent<AnimationController>();
-                    controller.OnAnimationEnded += (obj) => objectPool.Destroy(obj);
-                    controller.Animator.Play("Hit");
-                    hittingSound.pitch = Random.Range(0.6f, 0.8f);
-                    hittingSound.Play();
-                    damagable.TakeDamage(damage);
-                }               
-            }
+                    if (item.transform != null)
+                    {
+                        if (item.transform.TryGetComponent(out IDamagable damagable))
+                        {
+                            obj = objectPool.Instantiate(item.point, Quaternion.identity);
+                            var controller = obj.GetComponent<AnimationController>();
+                            controller.OnAnimationEnded += (obj) => objectPool.Destroy(obj);
+                            controller.Animator.Play("Hit");
+                            hittingSound.pitch = Random.Range(0.6f, 0.8f);
+                            hittingSound.Play();
+                            damagable.TakeDamage(damage);
+                            break;
+                        }
+                    }
+                }
+            }                      
             yield return new WaitForSeconds(0.05f);
-            shootObject.SetActive(false);
+            foreach (var item in shootObjects)
+            {
+                item.SetActive(false);
+            }
             yield return new WaitForSeconds(shotDelay);           
         }
         isShooting = false;

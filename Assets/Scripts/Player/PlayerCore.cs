@@ -3,23 +3,29 @@ using Pathfinding;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-
+using UnityEngine.SceneManagement;
+using UnityEngine.UI;
 public class PlayerCore : MonoBehaviour, IInput, IObject, IDamagable
 {
     [SerializeField] private float speed;
     [SerializeField] private Weapon weapon;
     [SerializeField] private float offset;
     [SerializeField] private int health = 100;
+    [SerializeField] private Text healthText;
+    [SerializeField] private GameObject losePanel;
     private Rigidbody2D rb;
     private float horizontalMovement;
     private float verticalMovement;
     private Vector2 mousePosition;
     private bool isDeactivated;
-
     private void Start()
     {
         GameInput.Input.ChangeInput(PlayerInput, this);
         rb = GetComponent<Rigidbody2D>();
+    }
+    private void Update()
+    {
+        healthText.text = $"{health}";
     }
     public Transform GetTransform()
     {
@@ -29,7 +35,9 @@ public class PlayerCore : MonoBehaviour, IInput, IObject, IDamagable
     {
         health -= damage;
         if (health <= 0)
-            Destroy(gameObject);
+        {
+            losePanel.SetActive(true);
+        }
         
     }
     public void Activate(IInput pastInput)
@@ -40,6 +48,7 @@ public class PlayerCore : MonoBehaviour, IInput, IObject, IDamagable
     }
     public void Deactivate()
     {
+        weapon.EndShooting();
         isDeactivated = true;
     }
     private void PlayerInput()
@@ -66,8 +75,6 @@ public class PlayerCore : MonoBehaviour, IInput, IObject, IDamagable
             return;
         rb.velocity = Vector2.zero;
         rb.angularVelocity = 0;
-        Debug.Log(rb.velocity);
-        Debug.Log(rb.angularVelocity);
         rb.MovePosition(transform.position
                                + new Vector3(horizontalMovement, verticalMovement) 
                                * speed 
@@ -76,5 +83,13 @@ public class PlayerCore : MonoBehaviour, IInput, IObject, IDamagable
         float angle = Mathf.Atan2(lookDirection.y, lookDirection.x) * Mathf.Rad2Deg - 90f;
         rb.rotation = angle + offset;
 
+    }
+    public void PlayAgain()
+    {
+        SceneManager.LoadScene(1);
+    }
+    public void GoMenu()
+    {
+        SceneManager.LoadScene(0);
     }
 }

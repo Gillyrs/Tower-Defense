@@ -1588,7 +1588,6 @@ public class AstarPath : VersionedMonoBehaviour {
 	/// <param name="graphsToScan">The graphs to scan. If this parameter is null then all graphs will be scanned</param>
 	public void Scan (NavGraph[] graphsToScan = null) {
 		var prevProgress = new Progress();
-
 		Profiler.BeginSample("Scan");
 		Profiler.BeginSample("Init");
 		foreach (var p in ScanAsync(graphsToScan)) {
@@ -1691,9 +1690,9 @@ public class AstarPath : VersionedMonoBehaviour {
 		// and the pro version that does essentially the same thing.
 		// I would appreciate if you purchased the pro version of the A* Pathfinding Project
 		// if you need async scanning.
-		if (Time.frameCount != startFrame) {
-			throw new System.Exception("Async scanning can only be done in the pro version of the A* Pathfinding Project");
-		}
+		//if (Time.frameCount != startFrame) {
+		//	throw new System.Exception("Async scanning can only be done in the pro version of the A* Pathfinding Project");
+		//}
 
 		if (OnPreScan != null) {
 			OnPreScan(this);
@@ -1781,7 +1780,7 @@ public class AstarPath : VersionedMonoBehaviour {
 		System.GC.Collect();
 
 		if (logPathResults != PathLog.None && logPathResults != PathLog.OnlyErrors) {
-			Debug.Log("Scanning - Process took "+(lastScanTime*1000).ToString("0")+" ms to complete");
+			//Debug.Log("Scanning - Process took "+(lastScanTime*1000).ToString("0")+" ms to complete");
 		}
 	}
 

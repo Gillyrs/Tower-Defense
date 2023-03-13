@@ -6,8 +6,13 @@ using System;
 public class ObjectPool : MonoBehaviour, IObjectPool
 {
     public GameObject Prefab { get; set; }
-    [SerializeField] private List<GameObject> poolObjects = new List<GameObject>();
+    [SerializeField] private List<GameObject> poolObjects;
     private bool isInitialized = false;
+
+    private void Awake()
+    {
+        poolObjects = new List<GameObject>();
+    }
     public void InitObjects(GameObject poolPrefab, int count)
     {
         if (isInitialized == true)
@@ -36,5 +41,11 @@ public class ObjectPool : MonoBehaviour, IObjectPool
     {
         poolObject.SetActive(false);
         poolObjects.Add(poolObject);
+    }
+
+    private void OnDestroy()
+    {
+        poolObjects = null;
+        Prefab = null;
     }
 }
