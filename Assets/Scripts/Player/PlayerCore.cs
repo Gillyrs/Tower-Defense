@@ -13,6 +13,8 @@ public class PlayerCore : MonoBehaviour, IInput, IObject, IDamagable
     [SerializeField] private int health = 100;
     [SerializeField] private Text healthText;
     [SerializeField] private GameObject losePanel;
+    [SerializeField] private AnimationController menuLoading;
+    [SerializeField] private AnimationController restartLoading;
     private Rigidbody2D rb;
     private float horizontalMovement;
     private float verticalMovement;
@@ -20,6 +22,8 @@ public class PlayerCore : MonoBehaviour, IInput, IObject, IDamagable
     private bool isDeactivated;
     private void Start()
     {
+        menuLoading.OnAnimationEnded += (gameObject) => GoMenu();
+        restartLoading.OnAnimationEnded += (gameObject) => PlayAgain();
         GameInput.Input.ChangeInput(PlayerInput, this);
         rb = GetComponent<Rigidbody2D>();
     }
@@ -36,6 +40,7 @@ public class PlayerCore : MonoBehaviour, IInput, IObject, IDamagable
         health -= damage;
         if (health <= 0)
         {
+            GameInput.Input.ChangeInput(null, null);
             losePanel.SetActive(true);
         }
         

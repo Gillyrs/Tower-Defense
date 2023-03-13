@@ -4,10 +4,11 @@ using UnityEngine;
 
 public class Loading : MonoBehaviour
 {
-    [SerializeField] private Animator animator;
+    [SerializeField] private AnimationController controller;
 
     private void Awake()
     {
-        animator.Play("LoadingEnd");
+        controller.OnAnimationEnded += (gameObject) => gameObject.SetActive(false);
+        controller.Animator.Play("LoadingEnd");
     }
 }
